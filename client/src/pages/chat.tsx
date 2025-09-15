@@ -6,6 +6,11 @@ import { ChatInterface } from "@/components/chat/ChatInterface";
 import { WorkspacePreview } from "@/components/workspace/WorkspacePreview";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
@@ -225,176 +230,181 @@ export default function Chat() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => window.history.back()}
-              data-testid="button-back"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-2xl font-bold" data-testid="text-chat-title">
-                {workspace ? `Editing: ${workspace.title}` : "New Workspace"}
-              </h1>
-              {workspace && (
-                <div className="flex items-center space-x-2 mt-1">
-                  <Badge 
-                    variant={workspace.status === 'completed' ? 'default' : 
-                           workspace.status === 'deployed' ? 'secondary' : 
-                           workspace.status === 'failed' ? 'destructive' : 'outline'}
-                    data-testid="badge-workspace-status"
-                  >
-                    {workspace.status}
-                  </Badge>
-                  {workspace.theme && (
-                    <Badge variant="outline">{workspace.theme}</Badge>
+      <ResizablePanelGroup
+        direction="horizontal"
+        className="flex-grow w-full rounded-lg border"
+      >
+        <ResizablePanel defaultSize={50}>
+          <div className="flex h-full flex-col p-6">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-4">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.history.back()}
+                  data-testid="button-back"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold" data-testid="text-chat-title">
+                    {workspace ? `Editing: ${workspace.title}` : "New Workspace"}
+                  </h1>
+                  {workspace && (
+                    <div className="flex items-center space-x-2 mt-1">
+                      <Badge
+                        variant={workspace.status === 'completed' ? 'default' :
+                               workspace.status === 'deployed' ? 'secondary' :
+                               workspace.status === 'failed' ? 'destructive' : 'outline'}
+                        data-testid="badge-workspace-status"
+                      >
+                        {workspace.status}
+                      </Badge>
+                      {workspace.theme && (
+                        <Badge variant="outline">{workspace.theme}</Badge>
+                      )}
+                    </div>
                   )}
                 </div>
+              </div>
+
+              {workspace && workspace.status === 'completed' && (
+                <Button
+                  onClick={handleDeployWorkspace}
+                  disabled={deployWorkspaceMutation.isPending}
+                  data-testid="button-deploy-workspace"
+                >
+                  {deployWorkspaceMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                  )}
+                  Deploy to Notion
+                </Button>
               )}
             </div>
-          </div>
-          
-          {workspace && workspace.status === 'completed' && (
-            <Button 
-              onClick={handleDeployWorkspace}
-              disabled={deployWorkspaceMutation.isPending}
-              data-testid="button-deploy-workspace"
-            >
-              {deployWorkspaceMutation.isPending ? (
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              ) : (
-                <ExternalLink className="w-4 h-4 mr-2" />
-              )}
-              Deploy to Notion
-            </Button>
-          )}
-        </div>
 
-        {/* Workspace Configuration (for new workspaces) */}
-        {!workspace && (
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="w-5 h-5" />
-                <span>Workspace Configuration</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Title *</label>
-                <input
-                  type="text"
-                  value={workspaceTitle}
-                  onChange={(e) => setWorkspaceTitle(e.target.value)}
-                  placeholder="e.g., Marketing Team CRM"
-                  className="w-full bg-input border border-border px-3 py-2 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  data-testid="input-workspace-title"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">Description</label>
-                <textarea
-                  value={workspaceDescription}
-                  onChange={(e) => setWorkspaceDescription(e.target.value)}
-                  placeholder="Brief description of what this workspace will be used for..."
-                  rows={2}
-                  className="w-full bg-input border border-border px-3 py-2 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-                  data-testid="textarea-workspace-description"
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-2">Theme</label>
-                <Select value={selectedTheme} onValueChange={setSelectedTheme}>
-                  <SelectTrigger data-testid="select-theme">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {themes.map((theme) => (
-                      <SelectItem key={theme.value} value={theme.value}>
-                        {theme.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              {/* Aesthetic Controls */}
-              <div className="space-y-4 pt-4 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    <label className="text-sm font-medium">Include AI-generated content</label>
+            {/* Workspace Configuration (for new workspaces) */}
+            {!workspace && (
+              <Card className="mb-6">
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Settings className="w-5 h-5" />
+                    <span>Workspace Configuration</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Title *</label>
+                    <input
+                      type="text"
+                      value={workspaceTitle}
+                      onChange={(e) => setWorkspaceTitle(e.target.value)}
+                      placeholder="e.g., Marketing Team CRM"
+                      className="w-full bg-input border border-border px-3 py-2 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      data-testid="input-workspace-title"
+                    />
                   </div>
-                  <Switch
-                    checked={includeContent}
-                    onCheckedChange={setIncludeContent}
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-2">Content Density</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Button
-                      variant={contentDensity === "minimal" ? "default" : "outline"}
-                      onClick={() => setContentDensity("minimal")}
-                      size="sm"
-                    >
-                      Minimal
-                    </Button>
-                    <Button
-                      variant={contentDensity === "moderate" ? "default" : "outline"}
-                      onClick={() => setContentDensity("moderate")}
-                      size="sm"
-                    >
-                      Moderate
-                    </Button>
-                    <Button
-                      variant={contentDensity === "rich" ? "default" : "outline"}
-                      onClick={() => setContentDensity("rich")}
-                      size="sm"
-                    >
-                      Rich
-                    </Button>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Description</label>
+                    <textarea
+                      value={workspaceDescription}
+                      onChange={(e) => setWorkspaceDescription(e.target.value)}
+                      placeholder="Brief description of what this workspace will be used for..."
+                      rows={2}
+                      className="w-full bg-input border border-border px-3 py-2 rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                      data-testid="textarea-workspace-description"
+                    />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {contentDensity === "minimal" && "Clean structure with placeholder guidance"}
-                    {contentDensity === "moderate" && "Realistic sample data with 3-5 examples per database"}
-                    {contentDensity === "rich" && "Complete business scenarios with 8-10 comprehensive examples"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Chat Interface */}
-          <div>
-            <ChatInterface
-              workspaceId={workspaceId}
-              onCreateWorkspace={handleCreateWorkspace}
-              onRefineWorkspace={handleRefineWorkspace}
-              isCreating={createWorkspaceMutation.isPending}
-              isRefining={refineWorkspaceMutation.isPending}
-              hasWorkspace={!!workspace}
-            />
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Theme</label>
+                    <Select value={selectedTheme} onValueChange={setSelectedTheme}>
+                      <SelectTrigger data-testid="select-theme">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {themes.map((theme) => (
+                          <SelectItem key={theme.value} value={theme.value}>
+                            {theme.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Aesthetic Controls */}
+                  <div className="space-y-4 pt-4 border-t border-border">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Sparkles className="w-4 h-4 text-primary" />
+                        <label className="text-sm font-medium">Include AI-generated content</label>
+                      </div>
+                      <Switch
+                        checked={includeContent}
+                        onCheckedChange={setIncludeContent}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Content Density</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Button
+                          variant={contentDensity === "minimal" ? "default" : "outline"}
+                          onClick={() => setContentDensity("minimal")}
+                          size="sm"
+                        >
+                          Minimal
+                        </Button>
+                        <Button
+                          variant={contentDensity === "moderate" ? "default" : "outline"}
+                          onClick={() => setContentDensity("moderate")}
+                          size="sm"
+                        >
+                          Moderate
+                        </Button>
+                        <Button
+                          variant={contentDensity === "rich" ? "default" : "outline"}
+                          onClick={() => setContentDensity("rich")}
+                          size="sm"
+                        >
+                          Rich
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {contentDensity === "minimal" && "Clean structure with placeholder guidance"}
+                        {contentDensity === "moderate" && "Realistic sample data with 3-5 examples per database"}
+                        {contentDensity === "rich" && "Complete business scenarios with 8-10 comprehensive examples"}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Chat Interface */}
+            <div className="flex-grow">
+              <ChatInterface
+                workspaceId={workspaceId}
+                onCreateWorkspace={handleCreateWorkspace}
+                onRefineWorkspace={handleRefineWorkspace}
+                isCreating={createWorkspaceMutation.isPending}
+                isRefining={refineWorkspaceMutation.isPending}
+                hasWorkspace={!!workspace}
+              />
+            </div>
           </div>
-
-          {/* Workspace Preview */}
-          <div>
-            <Card>
+        </ResizablePanel>
+        <ResizableHandle />
+        <ResizablePanel defaultSize={50}>
+          <div className="flex h-full items-center justify-center p-6">
+            <Card className="w-full h-full">
               <CardHeader>
                 <CardTitle>Workspace Preview</CardTitle>
               </CardHeader>
@@ -429,8 +439,8 @@ export default function Chat() {
               </CardContent>
             </Card>
           </div>
-        </div>
-      </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }
