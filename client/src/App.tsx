@@ -5,10 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
 import Landing from "@/pages/landing";
-import Dashboard from "@/pages/dashboard";
-import Chat from "@/pages/chat";
-import Templates from "@/pages/templates";
 import NotFound from "@/pages/not-found";
+import Chat from "@/pages/chat";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -23,14 +21,8 @@ function Router() {
 
   return (
     <Switch>
-      <Route path="/" component={isAuthenticated ? Dashboard : Landing} />
-      {isAuthenticated && (
-        <>
-          <Route path="/chat/:workspaceId?" component={Chat} />
-          <Route path="/templates" component={Templates} />
-          <Route path="/dashboard" component={Dashboard} />
-        </>
-      )}
+      <Route path="/" component={isAuthenticated ? Chat : Landing} />
+      <Route path="/chat/:workspaceId?" component={isAuthenticated ? Chat : Landing} />
       <Route component={NotFound} />
     </Switch>
   );
